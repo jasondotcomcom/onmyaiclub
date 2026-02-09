@@ -180,10 +180,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// Start server
+// Start server - bind to 0.0.0.0 for Railway/cloud deployment
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`🎵 Music sync server running on port ${PORT}`);
+const HOST = '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  console.log(`🎵 Music sync server running on ${HOST}:${PORT}`);
   console.log(`   Song duration: ${SONG_DURATION}s`);
   console.log(`   Server start time: ${new Date(serverStartTime).toISOString()}`);
 });
