@@ -441,7 +441,7 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
       // Fun recognizable objects made of particles that dance to the beat
 
       // SMILEY FACE WITH BEARD - bouncy happy guy
-      const setSmileyBeardTargets = (intensity: number) => {
+      const setSmileyBeardTargets = (_intensity: number) => {
         targetBgHue = 45; // Warm yellow-orange
         targetBgSat = 70;
         targetBgBright = 15 + smoothedBass * 15;
@@ -522,115 +522,8 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
         });
       };
 
-      // CACTUS - swaying desert friend
-      const setCactusTargets = (intensity: number) => {
-        targetBgHue = 30; // Desert orange
-        targetBgSat = 60;
-        targetBgBright = 18 + smoothedBass * 12;
-
-        const centerX = p.width / 2;
-        const baseY = p.height * 0.75;
-        const scale = Math.min(p.width, p.height) * 0.003;
-
-        // Swaying motion
-        const sway = Math.sin(syncedFrame * 0.04) * 15 * scale;
-        const bounce = -Math.abs(Math.sin(syncedFrame * 0.08)) * 10 * scale * (1 + bassPeak);
-
-        const shapePoints: { x: number; y: number; size: number }[] = [];
-
-        // Main body (tall rectangle with rounded top)
-        const bodyWidth = 30 * scale;
-        const bodyHeight = 120 * scale;
-        for (let i = 0; i < 15; i++) {
-          const t = i / 14;
-          const y = baseY - t * bodyHeight + bounce;
-          const wavyX = Math.sin(t * Math.PI + syncedFrame * 0.05) * sway * t;
-          // Left edge
-          shapePoints.push({ x: centerX - bodyWidth + wavyX, y, size: 9 + smoothedBass * 4 });
-          // Right edge
-          shapePoints.push({ x: centerX + bodyWidth + wavyX, y, size: 9 + smoothedBass * 4 });
-        }
-
-        // Left arm - waves independently
-        const leftArmY = baseY - bodyHeight * 0.6;
-        const leftArmSway = Math.sin(syncedFrame * 0.06 + 1) * 10 * scale;
-        const leftArmLift = Math.sin(syncedFrame * 0.04) * 0.2 + bassPeak * 0.3;
-        for (let i = 0; i < 8; i++) {
-          const t = i / 7;
-          const armAngle = -Math.PI * 0.5 - leftArmLift;
-          const armLength = 50 * scale * t;
-          // Horizontal part
-          if (t < 0.5) {
-            shapePoints.push({
-              x: centerX - bodyWidth - t * 40 * scale + leftArmSway,
-              y: leftArmY + sway * 0.5 + bounce,
-              size: 8 + smoothedBass * 3,
-            });
-          } else {
-            // Upward part
-            const upT = (t - 0.5) * 2;
-            shapePoints.push({
-              x: centerX - bodyWidth - 40 * scale + leftArmSway,
-              y: leftArmY - upT * 40 * scale + sway * 0.5 + bounce,
-              size: 8 + smoothedBass * 3,
-            });
-          }
-        }
-
-        // Right arm - waves opposite
-        const rightArmY = baseY - bodyHeight * 0.4;
-        const rightArmSway = Math.sin(syncedFrame * 0.06 + 3) * 10 * scale;
-        for (let i = 0; i < 8; i++) {
-          const t = i / 7;
-          if (t < 0.5) {
-            shapePoints.push({
-              x: centerX + bodyWidth + t * 35 * scale + rightArmSway,
-              y: rightArmY + sway * 0.3 + bounce,
-              size: 8 + smoothedBass * 3,
-            });
-          } else {
-            const upT = (t - 0.5) * 2;
-            shapePoints.push({
-              x: centerX + bodyWidth + 35 * scale + rightArmSway,
-              y: rightArmY - upT * 35 * scale + sway * 0.3 + bounce,
-              size: 8 + smoothedBass * 3,
-            });
-          }
-        }
-
-        // Flower on top! Pulses with beat
-        const flowerY = baseY - bodyHeight - 15 * scale + bounce;
-        const flowerSize = 12 + bassPeak * 15;
-        shapePoints.push({ x: centerX + sway, y: flowerY, size: flowerSize });
-        for (let i = 0; i < 6; i++) {
-          const petalAngle = (i / 6) * Math.PI * 2 + syncedFrame * 0.02;
-          const petalDist = 12 * scale * (1 + bassPeak * 0.5);
-          shapePoints.push({
-            x: centerX + Math.cos(petalAngle) * petalDist + sway,
-            y: flowerY + Math.sin(petalAngle) * petalDist,
-            size: 8 + bassPeak * 5,
-          });
-        }
-
-        // Pot at bottom
-        const potY = baseY + 10 * scale;
-        for (let i = 0; i < 8; i++) {
-          const t = i / 7;
-          const potWidth = 40 * scale * (1 - t * 0.3);
-          shapePoints.push({ x: centerX - potWidth, y: potY + t * 25 * scale, size: 10 });
-          shapePoints.push({ x: centerX + potWidth, y: potY + t * 25 * scale, size: 10 });
-        }
-
-        particles.forEach((particle, i) => {
-          const point = shapePoints[i % shapePoints.length];
-          particle.targetX = point.x;
-          particle.targetY = point.y;
-          particle.targetSize = point.size;
-        });
-      };
-
       // COOL SNEAKER - bouncing shoe with flowing laces
-      const setSneakerTargets = (intensity: number) => {
+      const setSneakerTargets = (_intensity: number) => {
         targetBgHue = 200; // Cool blue
         targetBgSat = 65;
         targetBgBright = 12 + smoothedBass * 15;
@@ -735,7 +628,7 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
       };
 
       // PIZZA SLICE - wobbling with stretchy cheese
-      const setPizzaTargets = (intensity: number) => {
+      const setPizzaTargets = (_intensity: number) => {
         targetBgHue = 15; // Warm pizza orange-red
         targetBgSat = 75;
         targetBgBright = 14 + smoothedBass * 12;
@@ -834,7 +727,7 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
       };
 
       // RETRO BOOMBOX - speakers pulse with the beat!
-      const setBoomboxTargets = (intensity: number) => {
+      const setBoomboxTargets = (_intensity: number) => {
         targetBgHue = 280; // Purple/magenta
         targetBgSat = 65;
         targetBgBright = 12 + smoothedBass * 18;
@@ -970,7 +863,7 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
       };
 
       // COFFEE CUP - with dancing steam
-      const setCoffeeCupTargets = (intensity: number) => {
+      const setCoffeeCupTargets = (_intensity: number) => {
         targetBgHue = 25; // Warm brown
         targetBgSat = 50;
         targetBgBright = 12 + smoothedBass * 10;
@@ -1075,7 +968,7 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
       };
 
       // RUBBER DUCK - bobbing in water
-      const setRubberDuckTargets = (intensity: number) => {
+      const setRubberDuckTargets = (_intensity: number) => {
         targetBgHue = 200; // Water blue
         targetBgSat = 60;
         targetBgBright = 20 + smoothedBass * 15;
