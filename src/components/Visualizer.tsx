@@ -493,23 +493,53 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
           });
         }
 
-        // BEARD - flows and bounces
+        // LONG FLOWING BEARD - wizened wizard / rabbi style
         const beardStartY = centerY + 35 * scale + bounce;
-        for (let row = 0; row < 4; row++) {
-          const rowY = beardStartY + row * 15 * scale;
-          const rowWidth = (45 - row * 8) * scale;
-          const beardWave = Math.sin(syncedFrame * 0.1 + row * 0.5) * 5 * scale;
-          const numPoints = 6 - row;
-          for (let i = 0; i < numPoints; i++) {
-            const t = numPoints > 1 ? i / (numPoints - 1) : 0.5;
-            const x = centerX + (t - 0.5) * 2 * rowWidth + beardWave;
-            const hairWiggle = Math.sin(syncedFrame * 0.15 + i + row) * 3 * scale;
+        const beardLength = 12; // Many rows for long flowing beard
+        const numStrands = 7; // Number of flowing strands
+
+        // Create long flowing strands
+        for (let strand = 0; strand < numStrands; strand++) {
+          const strandOffset = (strand / (numStrands - 1) - 0.5) * 2; // -1 to 1
+          const strandPhase = strand * 0.8; // Each strand waves differently
+
+          for (let row = 0; row < beardLength; row++) {
+            const t = row / (beardLength - 1); // 0 to 1 down the beard
+            const rowY = beardStartY + row * 12 * scale;
+
+            // Beard narrows toward bottom (wizard point)
+            const widthFactor = 1 - t * 0.6;
+            const baseX = centerX + strandOffset * 40 * scale * widthFactor;
+
+            // Flowing wave motion - more movement at bottom
+            const waveAmount = (5 + t * 15) * scale;
+            const waveX = Math.sin(syncedFrame * 0.08 + strandPhase + t * 2) * waveAmount;
+            const waveY = Math.cos(syncedFrame * 0.06 + strandPhase + t * 1.5) * waveAmount * 0.5;
+
+            // Beat reactivity - beard bounces and sways more on beats
+            const beatSway = bassPeak * 15 * scale * t * Math.sin(strandPhase);
+            const beatDrop = bassPeak * 10 * scale * t;
+
             shapePoints.push({
-              x: x + hairWiggle,
-              y: rowY + Math.abs(hairWiggle) + bassPeak * 10,
-              size: 8 - row + smoothedBass * 4,
+              x: baseX + waveX + beatSway,
+              y: rowY + waveY + beatDrop,
+              size: 9 - t * 4 + smoothedBass * 4,
             });
           }
+        }
+
+        // Add wispy beard tips at the very bottom
+        for (let tip = 0; tip < 5; tip++) {
+          const tipOffset = (tip / 4 - 0.5) * 40 * scale;
+          const tipY = beardStartY + beardLength * 12 * scale + 10 * scale;
+          const tipWave = Math.sin(syncedFrame * 0.12 + tip * 1.2) * 12 * scale;
+          const tipDangle = Math.sin(syncedFrame * 0.07 + tip) * 8 * scale;
+
+          shapePoints.push({
+            x: centerX + tipOffset * 0.4 + tipWave,
+            y: tipY + tipDangle + bassPeak * 15,
+            size: 5 + smoothedBass * 2,
+          });
         }
 
         // Assign particles
