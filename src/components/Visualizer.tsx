@@ -15,7 +15,7 @@ interface VisualizerProps {
 }
 
 // Modes - particles morph between these formations
-const MODES = ['circles', 'waves', 'smileyBeard', 'particles', 'geometric', 'sneaker', 'breathing', 'pizza', 'orbital', 'boombox', 'fractals', 'coffeeCup', 'rubberDuck'] as const;
+const MODES = ['circles', 'waves', 'smileyBeard', 'particles', 'geometric', 'star', 'breathing', 'pizza', 'orbital', 'boombox', 'fractals', 'heart', 'coffeeCup', 'rubberDuck'] as const;
 
 export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#ffffff', getOtherUsers, serverElapsedTime = null, secretModeActive = false }: VisualizerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -522,100 +522,71 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
         });
       };
 
-      // COOL SNEAKER - bouncing shoe with flowing laces
-      const setSneakerTargets = (_intensity: number) => {
-        targetBgHue = 200; // Cool blue
-        targetBgSat = 65;
-        targetBgBright = 12 + smoothedBass * 15;
+      // FIVE-POINTED STAR - spinning and pulsing
+      const setStarTargets = (_intensity: number) => {
+        targetBgHue = 50; // Golden yellow
+        targetBgSat = 80;
+        targetBgBright = 15 + smoothedBass * 18;
 
         const centerX = p.width / 2;
         const centerY = p.height / 2;
-        const scale = Math.min(p.width, p.height) * 0.0035;
+        const scale = Math.min(p.width, p.height) * 0.003;
 
-        // Bouncing and slight rotation
-        const bounce = -Math.abs(Math.sin(syncedFrame * 0.1)) * 30 * scale * (1 + bassPeak * 0.5);
-        const tilt = Math.sin(syncedFrame * 0.05) * 0.1;
+        // Spinning and pulsing
+        const rotation = syncedFrame * 0.02 + bassPeak * 0.5;
+        const pulse = 1 + smoothedBass * 0.3 + bassPeak * 0.2;
+        const bounce = Math.sin(syncedFrame * 0.08) * 15 * scale;
 
         const shapePoints: { x: number; y: number; size: number }[] = [];
 
-        // Sole - thick bottom
-        const soleY = centerY + 40 * scale + bounce;
-        for (let i = 0; i < 15; i++) {
-          const t = i / 14;
-          const x = centerX + (t - 0.5) * 140 * scale;
-          const curve = Math.sin(t * Math.PI) * 8 * scale;
-          shapePoints.push({
-            x: x,
-            y: soleY + curve + Math.cos(tilt) * (t - 0.5) * 20,
-            size: 12 + smoothedBass * 4,
-          });
-        }
+        // Star parameters
+        const outerRadius = 80 * scale * pulse;
+        const innerRadius = 35 * scale * pulse;
+        const points = 5;
 
-        // Upper shoe body
-        for (let row = 0; row < 4; row++) {
-          const rowY = soleY - (row + 1) * 15 * scale + bounce;
-          const rowWidth = (65 - row * 10) * scale;
-          const startX = centerX - 20 * scale; // Offset to left (toe area shorter)
-          for (let i = 0; i < 8; i++) {
-            const t = i / 7;
+        // Create star outline
+        for (let i = 0; i < points * 2; i++) {
+          const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2 + rotation;
+          const radius = i % 2 === 0 ? outerRadius : innerRadius;
+
+          // Add multiple particles along each edge for density
+          const nextAngle = ((i + 1) / (points * 2)) * Math.PI * 2 - Math.PI / 2 + rotation;
+          const nextRadius = (i + 1) % 2 === 0 ? outerRadius : innerRadius;
+
+          for (let j = 0; j < 5; j++) {
+            const t = j / 4;
+            const x1 = centerX + Math.cos(angle) * radius;
+            const y1 = centerY + Math.sin(angle) * radius + bounce;
+            const x2 = centerX + Math.cos(nextAngle) * nextRadius;
+            const y2 = centerY + Math.sin(nextAngle) * nextRadius + bounce;
+
             shapePoints.push({
-              x: startX + t * rowWidth,
-              y: rowY + Math.sin(tilt) * t * 10,
-              size: 9 + smoothedBass * 3,
+              x: p.lerp(x1, x2, t),
+              y: p.lerp(y1, y2, t),
+              size: 9 + smoothedBass * 5 + bassPeak * 4,
             });
           }
         }
 
-        // Toe cap - rounded front
-        const toeX = centerX - 50 * scale;
-        const toeY = centerY + 10 * scale + bounce;
-        for (let i = 0; i < 6; i++) {
-          const angle = Math.PI * 0.5 + (i / 5) * Math.PI;
+        // Inner glow - particles radiating from center
+        for (let i = 0; i < 10; i++) {
+          const angle = (i / 10) * Math.PI * 2 + rotation * 2;
+          const dist = 20 * scale * (1 + bassPeak * 0.5);
           shapePoints.push({
-            x: toeX + Math.cos(angle) * 25 * scale,
-            y: toeY + Math.sin(angle) * 20 * scale,
-            size: 10 + smoothedBass * 4,
+            x: centerX + Math.cos(angle) * dist,
+            y: centerY + Math.sin(angle) * dist + bounce,
+            size: 12 + bassPeak * 8,
           });
         }
 
-        // Heel counter
-        const heelX = centerX + 55 * scale;
-        for (let i = 0; i < 5; i++) {
-          const t = i / 4;
+        // Sparkle points at the tips
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2 - Math.PI / 2 + rotation;
+          const sparkleOffset = Math.sin(syncedFrame * 0.15 + i) * 8 * scale;
           shapePoints.push({
-            x: heelX,
-            y: soleY - t * 35 * scale + bounce,
-            size: 9 + smoothedBass * 3,
-          });
-        }
-
-        // LACES - flowing and dancing!
-        const laceStartX = centerX - 10 * scale;
-        const laceY = centerY - 10 * scale + bounce;
-        for (let lace = 0; lace < 2; lace++) {
-          const laceWave = Math.sin(syncedFrame * 0.12 + lace * 2) * 15 * scale;
-          const laceFloat = Math.cos(syncedFrame * 0.08 + lace) * 10 * scale;
-          for (let i = 0; i < 8; i++) {
-            const t = i / 7;
-            const side = lace === 0 ? -1 : 1;
-            shapePoints.push({
-              x: laceStartX + side * 15 * scale + laceWave * t,
-              y: laceY - t * 40 * scale + laceFloat * t + bassPeak * 20 * t,
-              size: 6 + smoothedBass * 2,
-            });
-          }
-        }
-
-        // Swoosh logo
-        const swooshY = centerY + 15 * scale + bounce;
-        for (let i = 0; i < 8; i++) {
-          const t = i / 7;
-          const swooshX = centerX - 30 * scale + t * 70 * scale;
-          const swooshCurve = Math.sin(t * Math.PI) * 15 * scale * (1 - t * 0.5);
-          shapePoints.push({
-            x: swooshX,
-            y: swooshY - swooshCurve,
-            size: 7 + bassPeak * 4,
+            x: centerX + Math.cos(angle) * (outerRadius + sparkleOffset),
+            y: centerY + Math.sin(angle) * (outerRadius + sparkleOffset) + bounce,
+            size: 14 + bassPeak * 10,
           });
         }
 
@@ -853,6 +824,82 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
             size: 5 + (1 - t) * 3,
           });
         }
+
+        particles.forEach((particle, i) => {
+          const point = shapePoints[i % shapePoints.length];
+          particle.targetX = point.x;
+          particle.targetY = point.y;
+          particle.targetSize = point.size;
+        });
+      };
+
+      // HEART - beating and glowing with love
+      const setHeartTargets = (_intensity: number) => {
+        targetBgHue = 340; // Pink/red
+        targetBgSat = 75;
+        targetBgBright = 14 + smoothedBass * 16;
+
+        const centerX = p.width / 2;
+        const centerY = p.height / 2;
+        const scale = Math.min(p.width, p.height) * 0.003;
+
+        // Heartbeat effect - pulses with the beat!
+        const heartbeat = 1 + bassPeak * 0.35 + Math.sin(syncedFrame * 0.15) * 0.08;
+        const bounce = Math.sin(syncedFrame * 0.06) * 10 * scale;
+
+        const shapePoints: { x: number; y: number; size: number }[] = [];
+
+        // Heart shape using parametric equation
+        const heartSize = 70 * scale * heartbeat;
+
+        // Outline of heart
+        for (let i = 0; i < 40; i++) {
+          const t = (i / 40) * Math.PI * 2;
+          // Parametric heart shape
+          const x = 16 * Math.pow(Math.sin(t), 3);
+          const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+          shapePoints.push({
+            x: centerX + x * heartSize * 0.06,
+            y: centerY + y * heartSize * 0.06 + bounce,
+            size: 10 + smoothedBass * 5 + bassPeak * 6,
+          });
+        }
+
+        // Inner glow rings
+        for (let ring = 1; ring <= 2; ring++) {
+          const ringScale = 1 - ring * 0.3;
+          for (let i = 0; i < 20; i++) {
+            const t = (i / 20) * Math.PI * 2;
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+            shapePoints.push({
+              x: centerX + x * heartSize * 0.06 * ringScale,
+              y: centerY + y * heartSize * 0.06 * ringScale + bounce,
+              size: (8 + bassPeak * 5) * (1 - ring * 0.2),
+            });
+          }
+        }
+
+        // Sparkles around the heart
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + syncedFrame * 0.03;
+          const sparkleRadius = heartSize * 1.3 + Math.sin(syncedFrame * 0.1 + i) * 10 * scale;
+          const sparkleSize = 6 + bassPeak * 8 + Math.sin(syncedFrame * 0.2 + i * 2) * 3;
+          shapePoints.push({
+            x: centerX + Math.cos(angle) * sparkleRadius,
+            y: centerY + Math.sin(angle) * sparkleRadius * 0.85 + bounce,
+            size: sparkleSize,
+          });
+        }
+
+        // Center glow - pulses strongly with beat
+        shapePoints.push({
+          x: centerX,
+          y: centerY + 5 * scale + bounce,
+          size: 15 + bassPeak * 15,
+        });
 
         particles.forEach((particle, i) => {
           const point = shapePoints[i % shapePoints.length];
@@ -1809,12 +1856,13 @@ export function Visualizer({ getAudioData, isPlaying, userColor: _userColor = '#
           case 'smileyBeard': setSmileyBeardTargets(intensity); break;
           case 'particles': setParticleTargets(intensity); break;
           case 'geometric': setGeometricTargets(intensity); break;
-          case 'sneaker': setSneakerTargets(intensity); break;
+          case 'star': setStarTargets(intensity); break;
           case 'breathing': setBreathingTargets(intensity); break;
           case 'pizza': setPizzaTargets(intensity); break;
           case 'orbital': setOrbitalTargets(intensity); break;
           case 'boombox': setBoomboxTargets(intensity); break;
           case 'fractals': setFractalTargets(intensity); break;
+          case 'heart': setHeartTargets(intensity); break;
           case 'coffeeCup': setCoffeeCupTargets(intensity); break;
           case 'rubberDuck': setRubberDuckTargets(intensity); break;
         }
